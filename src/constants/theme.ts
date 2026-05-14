@@ -1,0 +1,16 @@
+export const PALETTE = {
+    bg: "#F4F6FF",
+    surface: "#FFFFFF",
+    border: "#E8ECFF",
+    purple: "#7C3AED",
+    blue: "#2563EB",
+    cyan: "#0891B2",
+    green: "#16A34A",
+    orange: "#EA580C",
+    pink: "#DB2777",
+    yellow: "#D97706",
+    red: "#DC2626",
+    text: "#1E1B4B",
+    sub: "#6B7280",
+    light: "#EEF2FF",
+  };

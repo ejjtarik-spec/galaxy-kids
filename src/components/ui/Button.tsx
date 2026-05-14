@@ -1,11 +1,18 @@
 type ButtonProps = {
-    children: React.ReactNode;
-  };
-  
-  export default function Button({ children }: ButtonProps) {
-    return (
-      <button className="bg-purple-500 text-white px-4 py-2 rounded-xl">
-        {children}
-      </button>
-    );
-  }
+  children: React.ReactNode;
+  onClick?: () => void;
+};
+
+export default function Button({
+  children,
+  onClick,
+}: ButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-2xl transition"
+    >
+      {children}
+    </button>
+  );
+}

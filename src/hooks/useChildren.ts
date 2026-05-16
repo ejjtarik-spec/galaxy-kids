@@ -52,10 +52,6 @@ export function useChildren(user: User | null) {
       name,
       age,
       avatar: randomAvatar,
-      xp: 0,
-      coins: 0,
-      streak: 0,
-      lastBonusDate: "",
     });
   };
 

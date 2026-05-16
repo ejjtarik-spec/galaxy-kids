@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "framer-motion";
+
 import { Child } from "../../types";
 
 type ChildCardProps = {
@@ -28,45 +32,63 @@ export default function ChildCard({
   const streak = child.streak || 0;
 
   return (
-    <div
+    <motion.div
       onClick={onSelect}
-      className={`relative cursor-pointer overflow-hidden rounded-[2rem] border-2 p-5 shadow-xl transition active:scale-[0.98] ${
+      whileTap={{ scale: 0.97 }}
+      whileHover={{ scale: 1.01 }}
+      className={`relative cursor-pointer overflow-hidden rounded-[2.5rem] border p-5 shadow-[0_25px_100px_rgba(0,0,0,0.4)] transition ${
         isSelected
-          ? "border-purple-400 bg-gradient-to-br from-purple-100 via-pink-50 to-yellow-50"
-          : "border-white bg-white"
+          ? "border-cyan-300/60 bg-[#160A38]"
+          : "border-white/10 bg-[#100626]"
       }`}
     >
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.05] via-transparent to-purple-400/[0.08]" />
+
       {isSelected && (
         <>
-          <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-purple-300/40 blur-2xl" />
-          <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-pink-300/40 blur-2xl" />
+          <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-cyan-400/25 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-12 h-40 w-40 rounded-full bg-pink-500/25 blur-3xl" />
         </>
       )}
 
-      <div className="relative flex items-start justify-between gap-3">
+      <div className="relative z-10 flex items-start justify-between gap-3">
         <div className="flex items-center gap-4">
-          <div
-            className={`flex h-16 w-16 items-center justify-center rounded-3xl text-4xl shadow-lg ${
-              isSelected ? "bg-white" : "bg-purple-50"
+          <motion.div
+            animate={
+              isSelected
+                ? {
+                    y: [0, -6, 0],
+                    rotate: [0, -5, 5, 0],
+                  }
+                : undefined
+            }
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+            }}
+            className={`flex h-20 w-20 items-center justify-center rounded-[2rem] text-5xl shadow-2xl ${
+              isSelected
+                ? "bg-gradient-to-br from-cyan-300 via-purple-400 to-pink-500"
+                : "bg-white/10"
             }`}
           >
             {child.avatar || "🚀"}
-          </div>
+          </motion.div>
 
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-black text-gray-800">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-2xl font-black text-white">
                 {child.name}
               </h2>
 
               {isSelected && (
-                <span className="rounded-full bg-purple-600 px-2 py-1 text-xs font-black text-white">
+                <span className="rounded-full bg-cyan-300 px-3 py-1 text-xs font-black text-purple-950 shadow-[0_0_25px_rgba(103,232,249,0.65)]">
                   Actif
                 </span>
               )}
             </div>
 
-            <p className="mt-1 text-sm font-bold text-gray-500">
+            <p className="mt-1 text-sm font-bold text-white/60">
               {child.age} ans • Niveau {level}
             </p>
           </div>
@@ -74,74 +96,86 @@ export default function ChildCard({
 
         {showDelete && (
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onDelete();
             }}
-            className="rounded-2xl bg-red-50 px-3 py-2 text-xs font-black text-red-500 transition hover:bg-red-500 hover:text-white active:scale-95"
+            className="relative z-20 rounded-2xl bg-red-500/15 px-3 py-2 text-xs font-black text-red-200 transition hover:bg-red-500 hover:text-white active:scale-95"
           >
             Supprimer
           </button>
         )}
       </div>
 
-      <div className="relative mt-5">
+      <div className="relative z-10 mt-6">
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-sm font-black text-purple-700">
+          <p className="text-sm font-black text-cyan-200">
             ⭐ Progression XP
           </p>
 
-          <p className="text-xs font-black text-gray-500">
+          <p className="text-xs font-black text-white/60">
             {xp} / {nextLevelXP}
           </p>
         </div>
 
-        <div className="h-4 overflow-hidden rounded-full bg-white shadow-inner">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400 transition-all duration-700 ease-out"
-            style={{ width: `${progress}%` }}
+        <div className="h-4 overflow-hidden rounded-full bg-white/10 shadow-inner">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{
+              duration: 0.8,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+            className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-fuchsia-400 to-yellow-300 shadow-[0_0_25px_rgba(103,232,249,0.8)]"
           />
         </div>
       </div>
 
-      <div className="relative mt-5 grid grid-cols-3 gap-3">
-        <div className="rounded-3xl bg-white/80 p-3 text-center shadow-sm">
-          <p className="text-xl">⭐</p>
-          <p className="text-lg font-black text-purple-700">{xp}</p>
-          <p className="text-[11px] font-bold text-gray-400">XP</p>
+      <div className="relative z-10 mt-5 grid grid-cols-3 gap-3">
+        <div className="rounded-[1.8rem] border border-white/10 bg-white/10 p-3 text-center shadow-xl backdrop-blur-xl">
+          <p className="text-2xl">⭐</p>
+          <p className="text-xl font-black text-cyan-200">{xp}</p>
+          <p className="text-[11px] font-black uppercase text-white/40">
+            XP
+          </p>
         </div>
 
-        <div className="rounded-3xl bg-white/80 p-3 text-center shadow-sm">
-          <p className="text-xl">🪙</p>
-          <p className="text-lg font-black text-yellow-600">{coins}</p>
-          <p className="text-[11px] font-bold text-gray-400">Pièces</p>
+        <div className="rounded-[1.8rem] border border-white/10 bg-white/10 p-3 text-center shadow-xl backdrop-blur-xl">
+          <p className="text-2xl">🪙</p>
+          <p className="text-xl font-black text-yellow-200">{coins}</p>
+          <p className="text-[11px] font-black uppercase text-white/40">
+            Pièces
+          </p>
         </div>
 
-        <div className="rounded-3xl bg-white/80 p-3 text-center shadow-sm">
-          <p className="text-xl">🔥</p>
-          <p className="text-lg font-black text-orange-500">{streak}</p>
-          <p className="text-[11px] font-bold text-gray-400">Série</p>
+        <div className="rounded-[1.8rem] border border-white/10 bg-white/10 p-3 text-center shadow-xl backdrop-blur-xl">
+          <p className="text-2xl">🔥</p>
+          <p className="text-xl font-black text-orange-300">{streak}</p>
+          <p className="text-[11px] font-black uppercase text-white/40">
+            Série
+          </p>
         </div>
       </div>
 
       {badges.length > 0 && (
-        <div className="relative mt-5 flex flex-wrap gap-2">
+        <div className="relative z-10 mt-5 flex flex-wrap gap-2">
           {badges.slice(0, 4).map((badge) => (
             <span
               key={badge}
-              className="rounded-full bg-yellow-100 px-3 py-1 text-sm font-black text-yellow-700 shadow-sm"
+              className="rounded-full bg-yellow-300/15 px-3 py-1 text-sm font-black text-yellow-200 shadow-sm"
             >
               {badge}
             </span>
           ))}
 
           {badges.length > 4 && (
-            <span className="rounded-full bg-purple-100 px-3 py-1 text-sm font-black text-purple-700 shadow-sm">
+            <span className="rounded-full bg-cyan-300/15 px-3 py-1 text-sm font-black text-cyan-200 shadow-sm">
               +{badges.length - 4}
             </span>
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

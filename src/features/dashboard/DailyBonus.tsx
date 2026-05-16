@@ -1,6 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+
+import GameButton from "../../components/ui/GameButton";
 
 import { Child } from "../../types";
 
@@ -16,62 +19,154 @@ export default function DailyBonus({
   onClaim,
 }: DailyBonusProps) {
   const alreadyClaimed = child.lastBonusDate === today;
+
   const streak = child.streak || 0;
 
+  const [opening, setOpening] = useState(false);
+
+  const handleClaim = () => {
+    if (alreadyClaimed || opening) return;
+
+    setOpening(true);
+
+    setTimeout(() => {
+      onClaim();
+    }, 450);
+
+    setTimeout(() => {
+      setOpening(false);
+    }, 1200);
+  };
+
   return (
-    <div className="relative mt-6 overflow-hidden rounded-[2rem] bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600 p-[2px] shadow-[0_20px_80px_rgba(249,115,22,0.35)]">
-      <div className="relative overflow-hidden rounded-[1.9rem] bg-[#1E163A] p-5 text-white">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-yellow-300/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-pink-400/20 blur-3xl" />
+    <div className="relative mt-6 overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/10 shadow-[0_25px_100px_rgba(0,0,0,0.4)] backdrop-blur-2xl">
+      <div className="relative overflow-hidden rounded-[2.4rem] bg-gradient-to-br from-[#23103D] via-[#1E163A] to-[#2A1248] p-5 text-white">
+        <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-yellow-300/30 blur-3xl" />
+
+        <div className="pointer-events-none absolute -bottom-12 -left-12 h-40 w-40 rounded-full bg-pink-400/30 blur-3xl" />
+
+        <AnimatePresence>
+          {opening && (
+            <motion.div
+              initial={{
+                opacity: 0,
+                scale: 0.6,
+              }}
+              animate={{
+                opacity: 1,
+                scale: 1.5,
+              }}
+              exit={{
+                opacity: 0,
+                scale: 1.9,
+              }}
+              transition={{
+                duration: 0.6,
+              }}
+              className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+            >
+              <div className="h-48 w-48 rounded-full bg-yellow-300/40 blur-3xl" />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="relative z-10 flex items-center gap-4">
           <motion.div
-            animate={{
-              rotate: [0, -8, 8, -8, 0],
-              scale: [1, 1.05, 1],
-            }}
+            animate={
+              opening
+                ? {
+                    rotate: [-10, 10, -12, 12, 0],
+                    scale: [1, 1.2, 0.9, 1.3, 1],
+                  }
+                : {
+                    rotate: [0, -5, 5, -5, 0],
+                    y: [0, -6, 0],
+                  }
+            }
             transition={{
-              duration: 2,
-              repeat: Infinity,
+              duration: opening ? 0.7 : 2.5,
+              repeat: opening ? 0 : Infinity,
             }}
-            className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-yellow-300 to-orange-400 text-5xl shadow-2xl"
+            className="
+              relative
+              flex
+              h-24
+              w-24
+              items-center
+              justify-center
+              rounded-[2rem]
+              bg-gradient-to-br
+              from-yellow-300
+              via-orange-400
+              to-pink-500
+              text-6xl
+              shadow-[0_20px_80px_rgba(250,204,21,0.45)]
+            "
           >
-            🎁
+            <motion.span
+              animate={
+                opening
+                  ? {
+                      y: [-2, -22, 0],
+                      rotate: [0, -15, 15, 0],
+                    }
+                  : undefined
+              }
+              transition={{
+                duration: 0.7,
+              }}
+            >
+              {alreadyClaimed ? "✅" : "🎁"}
+            </motion.span>
+
+            {!alreadyClaimed && (
+              <motion.div
+                animate={{
+                  opacity: [0.2, 0.9, 0.2],
+                  scale: [1, 1.2, 1],
+                }}
+                transition={{
+                  duration: 1.6,
+                  repeat: Infinity,
+                }}
+                className="pointer-events-none absolute inset-0 rounded-[2rem] border-2 border-yellow-200/60"
+              />
+            )}
           </motion.div>
 
           <div className="flex-1">
             <p className="text-sm font-black uppercase tracking-wide text-orange-200">
-              Récompense quotidienne
+              Coffre quotidien
             </p>
 
-            <h2 className="mt-1 text-2xl font-black leading-tight">
+            <h2 className="mt-1 text-3xl font-black leading-tight">
               Bonus de {child.name}
             </h2>
 
             <p className="mt-2 text-sm font-bold text-white/70">
-              Reviens chaque jour pour augmenter ta série 🔥
+              Ouvre le coffre pour gagner ton énergie cosmique 🔥
             </p>
           </div>
         </div>
 
-        <div className="relative z-10 mt-6 rounded-3xl bg-white/10 p-4 backdrop-blur">
-          <div className="flex items-center justify-between">
+        <div className="relative z-10 mt-6 rounded-[2rem] bg-white/10 p-4 shadow-inner backdrop-blur-xl">
+          <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-white/70">
                 Série actuelle
               </p>
 
-              <p className="mt-1 text-3xl font-black text-orange-300">
+              <p className="mt-1 text-4xl font-black text-orange-300">
                 🔥 {streak}
               </p>
             </div>
 
-            <div className="rounded-2xl bg-yellow-300/20 px-4 py-3 text-center">
-              <p className="text-xs font-black text-yellow-100">
-                Bonus du jour
+            <div className="rounded-[1.5rem] bg-yellow-300/20 px-5 py-4 text-center shadow-lg">
+              <p className="text-xs font-black uppercase text-yellow-100">
+                Dans le coffre
               </p>
 
-              <p className="mt-1 text-lg font-black text-white">
+              <p className="mt-2 text-xl font-black text-white">
                 +10 XP ⭐
               </p>
 
@@ -82,38 +177,73 @@ export default function DailyBonus({
           </div>
         </div>
 
+        <AnimatePresence>
+          {opening && (
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: 20,
+                scale: 0.8,
+              }}
+              animate={{
+                opacity: 1,
+                y: -10,
+                scale: 1,
+              }}
+              exit={{
+                opacity: 0,
+                y: -40,
+                scale: 0.8,
+              }}
+              className="
+                relative
+                z-10
+                mt-5
+                rounded-[2rem]
+                bg-gradient-to-r
+                from-yellow-300
+                via-orange-400
+                to-pink-500
+                px-5
+                py-4
+                text-center
+                text-white
+                shadow-[0_0_50px_rgba(250,204,21,0.7)]
+              "
+            >
+              <p className="text-2xl font-black">
+                ✨ +10 XP • +5 🪙 ✨
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {!alreadyClaimed ? (
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={onClaim}
-            className="
-              relative
-              z-10
-              mt-6
-              w-full
-              rounded-3xl
-              bg-gradient-to-r
-              from-yellow-300
-              via-orange-400
-              to-pink-500
-              px-6
-              py-4
-              text-lg
-              font-black
-              text-white
-              shadow-2xl
-            "
-          >
-            ✨ Récupérer le bonus du jour
-          </motion.button>
+          <div className="relative z-10 mt-6">
+            <GameButton
+              onClick={handleClaim}
+              disabled={opening}
+              className="
+                w-full
+                bg-gradient-to-r
+                from-yellow-300
+                via-orange-400
+                to-pink-500
+                text-lg
+              "
+            >
+              {opening
+                ? "✨ Ouverture du coffre..."
+                : "🎁 Ouvrir le coffre du jour"}
+            </GameButton>
+          </div>
         ) : (
-          <div className="relative z-10 mt-6 rounded-3xl bg-green-500 px-6 py-4 text-center shadow-xl">
-            <p className="text-lg font-black text-white">
-              ✅ Bonus déjà récupéré
+          <div className="relative z-10 mt-6 rounded-[2rem] bg-gradient-to-r from-green-400 to-emerald-500 px-6 py-5 text-center shadow-2xl">
+            <p className="text-xl font-black text-white">
+              ✅ Coffre déjà ouvert
             </p>
 
-            <p className="mt-1 text-sm font-bold text-white/80">
+            <p className="mt-2 text-sm font-bold text-white/80">
               Reviens demain pour continuer ta série 🔥
             </p>
           </div>
@@ -121,14 +251,14 @@ export default function DailyBonus({
 
         <motion.div
           animate={{
-            opacity: [0.15, 0.35, 0.15],
+            opacity: [0.12, 0.4, 0.12],
             scale: [1, 1.05, 1],
           }}
           transition={{
             duration: 3,
             repeat: Infinity,
           }}
-          className="pointer-events-none absolute inset-0 rounded-[1.9rem] border border-white/10"
+          className="pointer-events-none absolute inset-0 rounded-[2.4rem] border border-white/10"
         />
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 type LevelUpModalProps = {
   level: number;
@@ -13,105 +14,167 @@ export default function LevelUpModal({
   open,
   onClose,
 }: LevelUpModalProps) {
+  useEffect(() => {
+    if (!open) return;
+
+    const timeout = setTimeout(() => {
+      onClose();
+    }, 2600);
+
+    return () => clearTimeout(timeout);
+  }, [open, onClose]);
+
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden p-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="
+            fixed
+            inset-0
+            z-50
+            flex
+            items-center
+            justify-center
+            bg-black/50
+            p-4
+            backdrop-blur-sm
+          "
+        >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-          />
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.6, y: 80, rotate: -8 }}
-            animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 40 }}
-            transition={{
-              duration: 0.7,
-              ease: [0.16, 1, 0.3, 1],
+            initial={{
+              scale: 0.7,
+              opacity: 0,
+              y: 40,
             }}
-            className="relative z-10 w-full max-w-md overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-purple-600 via-pink-500 to-yellow-400 p-[2px] shadow-[0_25px_120px_rgba(168,85,247,0.5)]"
+            animate={{
+              scale: 1,
+              opacity: 1,
+              y: 0,
+            }}
+            exit={{
+              scale: 0.8,
+              opacity: 0,
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 180,
+              damping: 14,
+            }}
+            className="
+              relative
+              w-full
+              max-w-sm
+              overflow-hidden
+              rounded-[2.5rem]
+              bg-gradient-to-br
+              from-yellow-300
+              via-orange-400
+              to-pink-500
+              p-[2px]
+              shadow-[0_0_120px_rgba(250,204,21,0.45)]
+            "
           >
-            <div className="relative overflow-hidden rounded-[2.4rem] bg-[#1F1147] px-8 py-10 text-center text-white">
-              <div className="pointer-events-none absolute -left-12 -top-12 h-40 w-40 rounded-full bg-pink-400/30 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-12 -right-12 h-40 w-40 rounded-full bg-yellow-300/30 blur-3xl" />
-
-              <motion.div
-                initial={{ scale: 0.4, rotate: -20 }}
-                animate={{
-                  scale: [0.8, 1.2, 1],
-                  rotate: [0, 12, -12, 0],
-                }}
-                transition={{
-                  duration: 1,
-                  delay: 0.2,
-                }}
-                className="relative z-10 text-8xl drop-shadow-2xl"
-              >
-                🏆
-              </motion.div>
-
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="relative z-10 mt-5 text-5xl font-black tracking-tight text-yellow-300 drop-shadow-lg"
-              >
-                LEVEL UP
-              </motion.h2>
-
-              <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: [1, 1.08, 1] }}
-                transition={{
-                  duration: 1,
-                  repeat: Infinity,
-                }}
-                className="relative z-10 mt-6 inline-flex items-center rounded-full bg-white/10 px-6 py-3 backdrop-blur"
-              >
-                <span className="text-lg font-black text-white/80">
-                  Niveau
-                </span>
-
-                <span className="ml-3 text-4xl font-black text-white">
-                  {level}
-                </span>
-              </motion.div>
-
-              <p className="relative z-10 mt-6 text-lg font-bold text-white/80">
-                Incroyable progression 🚀
-              </p>
-
-              <p className="relative z-10 mt-2 text-sm font-bold text-white/50">
-                Continue tes missions pour débloquer encore plus de récompenses.
-              </p>
-
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.95 }}
-                whileHover={{ scale: 1.03 }}
-                onClick={onClose}
-                className="relative z-20 mt-8 w-full rounded-3xl bg-gradient-to-r from-yellow-300 to-orange-400 px-6 py-4 text-lg font-black text-purple-900 shadow-2xl"
-              >
-                ✨ Continuer l’aventure
-              </motion.button>
+            <div className="relative rounded-[2.4rem] bg-[#1E163A] p-8 text-center text-white">
+              <div className="pointer-events-none absolute -left-10 top-0 h-40 w-40 rounded-full bg-pink-500/20 blur-3xl" />
+              <div className="pointer-events-none absolute -right-10 bottom-0 h-40 w-40 rounded-full bg-yellow-300/20 blur-3xl" />
 
               <motion.div
                 animate={{
-                  opacity: [0.2, 0.5, 0.2],
-                  scale: [1, 1.08, 1],
+                  rotate: [0, -10, 10, -10, 0],
+                  scale: [1, 1.1, 1],
+                  y: [0, -10, 0],
                 }}
                 transition={{
                   duration: 2,
                   repeat: Infinity,
                 }}
-                className="pointer-events-none absolute inset-0 rounded-[2.4rem] border border-white/10"
-              />
+                className="relative z-10 text-8xl"
+              >
+                🏆
+              </motion.div>
+
+              <motion.h2
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="
+                  mt-5
+                  bg-gradient-to-r
+                  from-yellow-300
+                  via-pink-400
+                  to-cyan-300
+                  bg-clip-text
+                  text-4xl
+                  font-black
+                  text-transparent
+                "
+              >
+                LEVEL UP !
+              </motion.h2>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="mt-4 text-3xl font-black"
+              >
+                Niveau {level}
+              </motion.p>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.45 }}
+                className="mt-3 text-sm font-bold text-white/70"
+              >
+                Incroyable progression cosmique 🚀
+              </motion.p>
+
+              <div className="mt-8 flex justify-center gap-3">
+                <motion.div
+                  animate={{
+                    scale: [1, 1.4, 1],
+                    opacity: [0.3, 1, 0.3],
+                  }}
+                  transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                  }}
+                  className="h-3 w-3 rounded-full bg-pink-400"
+                />
+
+                <motion.div
+                  animate={{
+                    scale: [1, 1.4, 1],
+                    opacity: [0.3, 1, 0.3],
+                  }}
+                  transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                    delay: 0.2,
+                  }}
+                  className="h-3 w-3 rounded-full bg-yellow-300"
+                />
+
+                <motion.div
+                  animate={{
+                    scale: [1, 1.4, 1],
+                    opacity: [0.3, 1, 0.3],
+                  }}
+                  transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                    delay: 0.4,
+                  }}
+                  className="h-3 w-3 rounded-full bg-cyan-300"
+                />
+              </div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

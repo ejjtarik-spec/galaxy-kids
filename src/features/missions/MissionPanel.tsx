@@ -1,3 +1,9 @@
+"use client";
+
+import { motion } from "framer-motion";
+
+import GameButton from "../../components/ui/GameButton";
+
 import { Child, Task } from "../../types";
 
 type MissionPanelProps = {
@@ -12,6 +18,17 @@ type MissionPanelProps = {
   onCompleteTask: (task: Task) => void;
 };
 
+const missionIcons = [
+  "🧹",
+  "📚",
+  "🧠",
+  "🚀",
+  "🎨",
+  "⚽",
+  "🛏️",
+  "🦷",
+];
+
 export default function MissionPanel({
   child,
   tasks,
@@ -23,78 +40,174 @@ export default function MissionPanel({
   onAddTask,
   onCompleteTask,
 }: MissionPanelProps) {
-  const completedTasks = tasks.filter((task) => task.done).length;
-  const remainingTasks = tasks.length - completedTasks;
+  const completedTasks = tasks.filter(
+    (task) => task.done
+  ).length;
+
+  const remainingTasks =
+    tasks.length - completedTasks;
 
   return (
-    <div className="mt-6 overflow-hidden rounded-[2rem] bg-white shadow-xl">
-      <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-5 text-white">
-        <div className="flex items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 text-3xl shadow-lg backdrop-blur">
-            {child.avatar || "🚀"}
+    <div className="mt-6 overflow-hidden rounded-[2.8rem] border border-fuchsia-400/20 bg-[#160A38]/90 shadow-[0_30px_120px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
+      <div className="relative overflow-hidden border-b border-white/10 bg-gradient-to-br from-fuchsia-600 via-purple-700 to-indigo-700 p-6 text-white">
+        <div className="pointer-events-none absolute -left-20 top-0 h-56 w-56 rounded-full bg-pink-400/20 blur-3xl" />
+
+        <div className="pointer-events-none absolute -right-20 bottom-0 h-56 w-56 rounded-full bg-cyan-400/20 blur-3xl" />
+
+        <motion.div
+          animate={{
+            opacity: [0.4, 0.9, 0.4],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+          }}
+          className="pointer-events-none absolute inset-0"
+        >
+          <div className="absolute left-10 top-10 text-white/40">
+            ✦
           </div>
 
+          <div className="absolute right-16 top-20 text-white/30">
+            ✦
+          </div>
+
+          <div className="absolute bottom-10 left-1/3 text-white/20">
+            ✦
+          </div>
+        </motion.div>
+
+        <div className="relative z-10 flex items-center gap-4">
+          <motion.div
+            animate={{
+              y: [0, -6, 0],
+              rotate: [0, -4, 4, 0],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+            }}
+            className="
+              flex
+              h-20
+              w-20
+              items-center
+              justify-center
+              rounded-[2rem]
+              bg-gradient-to-br
+              from-pink-400
+              via-fuchsia-500
+              to-indigo-500
+              text-5xl
+              shadow-[0_20px_60px_rgba(192,132,252,0.45)]
+            "
+          >
+            {child.avatar || "🚀"}
+          </motion.div>
+
           <div>
-            <p className="text-sm font-black text-white/80">
+            <p className="text-sm font-black uppercase tracking-widest text-fuchsia-200">
               Centre de missions
             </p>
 
-            <h2 className="text-2xl font-black">
-              Missions de {child.name}
+            <h2 className="mt-1 text-4xl font-black leading-tight text-white">
+              Tes missions ✨
             </h2>
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-3xl bg-white/20 p-4 text-center backdrop-blur">
-            <p className="text-3xl font-black">{remainingTasks}</p>
-            <p className="text-xs font-bold text-white/80">À terminer</p>
+        <div className="relative z-10 mt-6 grid grid-cols-2 gap-4">
+          <div className="rounded-[2rem] border border-white/10 bg-white/10 p-4 text-center shadow-xl backdrop-blur-xl">
+            <p className="text-5xl font-black text-cyan-300">
+              {remainingTasks}
+            </p>
+
+            <p className="mt-1 text-xs font-black uppercase tracking-wide text-white/70">
+              À terminer
+            </p>
           </div>
 
-          <div className="rounded-3xl bg-white/20 p-4 text-center backdrop-blur">
-            <p className="text-3xl font-black">{completedTasks}</p>
-            <p className="text-xs font-bold text-white/80">Réussies</p>
+          <div className="rounded-[2rem] border border-white/10 bg-white/10 p-4 text-center shadow-xl backdrop-blur-xl">
+            <p className="text-5xl font-black text-green-300">
+              {completedTasks}
+            </p>
+
+            <p className="mt-1 text-xs font-black uppercase tracking-wide text-white/70">
+              Réussies
+            </p>
           </div>
         </div>
       </div>
 
       {canManageMissions && (
-        <div className="space-y-3 bg-purple-50 p-5">
-          <button
+        <div className="space-y-4 border-b border-white/5 bg-white/[0.03] p-5">
+          <GameButton
             onClick={onGenerateMission}
             disabled={loadingMission}
-            className="w-full rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 p-4 font-black text-white shadow-lg transition active:scale-95 disabled:opacity-60"
+            className="
+              w-full
+              bg-gradient-to-r
+              from-fuchsia-500
+              via-purple-500
+              to-cyan-500
+              text-lg
+            "
           >
-            {loadingMission ? "🤖 Génération en cours..." : "🤖 Générer mission IA"}
-          </button>
+            {loadingMission
+              ? "🤖 Génération..."
+              : "🤖 Générer mission IA"}
+          </GameButton>
 
           <input
             value={taskTitle}
-            onChange={(e) => onTaskTitleChange(e.target.value)}
+            onChange={(e) =>
+              onTaskTitleChange(e.target.value)
+            }
             placeholder={`Nouvelle mission pour ${child.name}`}
-            className="w-full rounded-2xl border-2 border-purple-100 bg-white p-4 font-bold outline-none transition focus:border-purple-400"
+            className="
+              w-full
+              rounded-[1.8rem]
+              border
+              border-white/10
+              bg-white/10
+              p-4
+              text-lg
+              font-bold
+              text-white
+              outline-none
+              backdrop-blur-xl
+              placeholder:text-white/40
+              focus:border-fuchsia-400/40
+            "
           />
 
-          <button
+          <GameButton
             onClick={onAddTask}
             disabled={!taskTitle.trim()}
-            className="w-full rounded-2xl bg-green-500 p-4 font-black text-white shadow-lg transition active:scale-95 disabled:opacity-50"
+            className="
+              w-full
+              bg-gradient-to-r
+              from-green-400
+              via-emerald-500
+              to-teal-500
+              text-lg
+            "
           >
-            ➕ Ajouter mission à {child.name}
-          </button>
+            ➕ Ajouter mission
+          </GameButton>
         </div>
       )}
 
-      <div className="space-y-3 p-5">
+      <div className="space-y-5 p-5">
         {tasks.length === 0 && (
-          <div className="rounded-3xl bg-gray-50 p-6 text-center">
-            <p className="text-5xl">🌙</p>
+          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-10 text-center backdrop-blur-xl">
+            <p className="text-7xl">🌙</p>
 
-            <p className="mt-3 text-lg font-black text-gray-700">
+            <p className="mt-4 text-3xl font-black text-white">
               Aucune mission
             </p>
 
-            <p className="mt-1 text-sm font-bold text-gray-400">
+            <p className="mt-2 text-sm font-bold text-white/50">
               Les prochaines aventures apparaîtront ici.
             </p>
           </div>
@@ -104,59 +217,111 @@ export default function MissionPanel({
           const isDone = task.done;
 
           return (
-            <div
+            <motion.div
               key={task.id}
-              className={`relative overflow-hidden rounded-3xl border-2 p-4 shadow-sm transition ${
-                isDone
-                  ? "border-green-200 bg-green-50"
-                  : "border-purple-100 bg-white"
-              }`}
+              whileHover={{
+                scale: 1.015,
+              }}
+              className={`
+                relative
+                overflow-hidden
+                rounded-[2.3rem]
+                border
+                p-5
+                shadow-[0_15px_60px_rgba(0,0,0,0.35)]
+                backdrop-blur-2xl
+                transition
+                ${
+                  isDone
+                    ? "border-cyan-400/40 bg-[#0E1A5A]"
+                    : "border-fuchsia-400/20 bg-[#120A45]"
+                }
+              `}
             >
-              <div className="flex items-start gap-3">
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-cyan-300/[0.03]" />
+
+              {isDone && (
+                <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
+              )}
+
+              <div className="relative z-10 flex items-start gap-4">
                 <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl font-black shadow ${
-                    isDone
-                      ? "bg-green-500 text-white"
-                      : "bg-purple-100 text-purple-700"
-                  }`}
+                  className={`
+                    flex
+                    h-16
+                    w-16
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-[1.7rem]
+                    text-4xl
+                    shadow-[0_10px_35px_rgba(0,0,0,0.35)]
+                    ${
+                      isDone
+                        ? "bg-gradient-to-br from-green-400 to-emerald-500"
+                        : "bg-gradient-to-br from-fuchsia-500 via-purple-500 to-indigo-500"
+                    }
+                  `}
                 >
-                  {isDone ? "✓" : index + 1}
+                  {isDone
+                    ? "✓"
+                    : missionIcons[
+                        index % missionIcons.length
+                      ]}
                 </div>
 
                 <div className="flex-1">
                   <p
-                    className={`text-lg font-black leading-snug ${
-                      isDone ? "text-green-800 line-through" : "text-gray-800"
-                    }`}
+                    className={`
+                      text-2xl
+                      font-black
+                      leading-tight
+                      ${
+                        isDone
+                          ? "text-cyan-100"
+                          : "text-white"
+                      }
+                    `}
                   >
                     {task.title}
                   </p>
 
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-black text-yellow-700">
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <div className="rounded-full bg-yellow-300/15 px-4 py-2 text-sm font-black text-yellow-200">
                       ⭐ +{task.xp} XP
-                    </span>
+                    </div>
 
-                    <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-black text-orange-700">
+                    <div className="rounded-full bg-orange-300/15 px-4 py-2 text-sm font-black text-orange-200">
                       🪙 +{task.coins}
-                    </span>
+                    </div>
                   </div>
 
                   {!isDone ? (
-                    <button
-                      onClick={() => onCompleteTask(task)}
-                      className="mt-4 w-full rounded-2xl bg-purple-600 px-4 py-3 font-black text-white shadow-lg transition active:scale-95"
-                    >
-                      ✅ Mission terminée
-                    </button>
+                    <div className="mt-5">
+                      <GameButton
+                        onClick={() =>
+                          onCompleteTask(task)
+                        }
+                        className="
+                          w-full
+                          bg-gradient-to-r
+                          from-green-400
+                          via-emerald-500
+                          to-teal-500
+                          text-lg
+                        "
+                      >
+                        🎉 Mission accomplie
+                      </GameButton>
+                    </div>
                   ) : (
-                    <p className="mt-4 rounded-2xl bg-green-500 px-4 py-3 text-center font-black text-white">
-                      🎉 Mission accomplie
-                    </p>
+                    <div className="mt-5 rounded-[1.7rem] bg-gradient-to-r from-green-400 to-emerald-500 px-5 py-4 text-center text-lg font-black text-white shadow-[0_10px_40px_rgba(34,197,94,0.35)]">
+                      ✅ Mission terminée
+                    </div>
                   )}
                 </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>

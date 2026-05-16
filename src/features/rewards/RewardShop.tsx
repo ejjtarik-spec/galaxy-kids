@@ -1,3 +1,7 @@
+"use client";
+
+import GameButton from "../../components/ui/GameButton";
+
 import { Child, Reward } from "../../types";
 
 type RewardShopProps = {
@@ -5,6 +9,8 @@ type RewardShopProps = {
   rewards: Reward[];
   onBuyReward: (reward: Reward) => void;
 };
+
+const rewardIcons = ["🎁", "🧸", "🍭", "🎮", "🚀", "👑", "💎", "🪄"];
 
 export default function RewardShop({
   child,
@@ -14,74 +20,104 @@ export default function RewardShop({
   const coins = child.coins || 0;
 
   return (
-    <div className="mt-6 overflow-hidden rounded-[2rem] bg-white shadow-xl">
-      <div className="bg-gradient-to-br from-yellow-400 via-orange-400 to-pink-500 p-5 text-white">
-        <p className="text-sm font-black text-white/80">Boutique magique</p>
+    <div className="mt-6 overflow-hidden rounded-[2.8rem] border border-fuchsia-400/20 bg-[#14072F] shadow-[0_30px_120px_rgba(0,0,0,0.5)]">
+      <div className="relative overflow-hidden border-b border-white/10 bg-gradient-to-br from-yellow-400 via-orange-500 to-pink-600 p-6 text-white">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-yellow-200/30 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 h-44 w-44 rounded-full bg-fuchsia-400/30 blur-3xl" />
 
-        <h2 className="text-2xl font-black">🎁 Récompenses de {child.name}</h2>
+        <div className="relative z-10">
+          <p className="text-sm font-black uppercase tracking-widest text-yellow-100">
+            Boutique cosmique
+          </p>
 
-        <div className="mt-4 rounded-3xl bg-white/20 p-4 text-center backdrop-blur">
-          <p className="text-sm font-bold text-white/80">Pièces disponibles</p>
-          <p className="text-4xl font-black">🪙 {coins}</p>
+          <h2 className="mt-1 text-3xl font-black leading-tight drop-shadow-lg">
+            🎁 Récompenses de {child.name}
+          </h2>
+
+          <div className="mt-5 rounded-[2rem] border border-white/20 bg-[#1B0B3F]/60 p-4 text-center shadow-inner backdrop-blur-xl">
+            <p className="text-sm font-black uppercase text-yellow-100">
+              Pièces disponibles
+            </p>
+
+            <p className="mt-1 text-5xl font-black text-white drop-shadow-lg">
+              🪙 {coins}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-4 p-5">
-        {rewards.map((reward) => {
+      <div className="space-y-4 bg-[#100626] p-5">
+        {rewards.map((reward, index) => {
           const canBuy = coins >= reward.price;
           const missingCoins = reward.price - coins;
+          const icon = rewardIcons[index % rewardIcons.length];
 
           return (
             <div
               key={reward.name}
-              className={`relative overflow-hidden rounded-3xl border-2 p-4 shadow-sm transition ${
+              className={`relative overflow-hidden rounded-[2.2rem] border p-4 shadow-xl transition ${
                 canBuy
-                  ? "border-yellow-200 bg-yellow-50"
-                  : "border-gray-200 bg-gray-50 opacity-80"
+                  ? "border-yellow-300/40 bg-[#251044]"
+                  : "border-white/10 bg-[#1A1230]"
               }`}
             >
-              {canBuy && (
-                <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-yellow-300/40 blur-2xl" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.05] via-transparent to-purple-400/[0.06]" />
+
+              {canBuy ? (
+                <>
+                  <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-yellow-300/25 blur-3xl" />
+                  <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-pink-400/20 blur-3xl" />
+                </>
+              ) : (
+                <div className="pointer-events-none absolute inset-0 bg-black/25" />
               )}
 
-              <div className="relative flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
+              <div className="relative z-10 flex items-center justify-between gap-4">
+                <div className="flex min-w-0 flex-1 items-center gap-4">
                   <div
-                    className={`flex h-14 w-14 items-center justify-center rounded-2xl text-3xl shadow ${
-                      canBuy ? "bg-yellow-400" : "bg-gray-200"
+                    className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.5rem] text-4xl shadow-2xl ${
+                      canBuy
+                        ? "bg-gradient-to-br from-yellow-300 via-orange-400 to-pink-500"
+                        : "bg-[#2A2140]"
                     }`}
                   >
-                    🎁
+                    {canBuy ? icon : "🔒"}
                   </div>
 
-                  <div>
-                    <p className="text-lg font-black text-gray-800">
+                  <div className="min-w-0">
+                    <p className="text-xl font-black leading-tight text-white drop-shadow">
                       {reward.name}
                     </p>
 
-                    <p className="text-sm font-bold text-gray-500">
+                    <p className="mt-1 text-sm font-bold text-yellow-100/80">
                       Prix : 🪙 {reward.price}
                     </p>
 
                     {!canBuy && (
-                      <p className="mt-1 text-xs font-black text-red-500">
+                      <p className="mt-1 text-xs font-black text-red-300">
                         Il manque {missingCoins} pièces
+                      </p>
+                    )}
+
+                    {canBuy && (
+                      <p className="mt-1 text-xs font-black text-yellow-200">
+                        Disponible maintenant ✨
                       </p>
                     )}
                   </div>
                 </div>
 
-                <button
+                <GameButton
                   onClick={() => onBuyReward(reward)}
                   disabled={!canBuy}
-                  className={`rounded-2xl px-4 py-3 text-sm font-black text-white shadow-lg transition active:scale-95 disabled:cursor-not-allowed ${
+                  className={
                     canBuy
-                      ? "bg-gradient-to-r from-yellow-400 to-orange-500"
-                      : "bg-gray-300"
-                  }`}
+                      ? "shrink-0 bg-gradient-to-r from-yellow-300 via-orange-400 to-pink-500"
+                      : "shrink-0 bg-[#3A3150] text-white/70"
+                  }
                 >
                   {canBuy ? "Acheter" : "Bloqué"}
-                </button>
+                </GameButton>
               </div>
             </div>
           );

@@ -28,6 +28,11 @@ import { getBadges } from "../utils/badges";
 import { buyReward } from "../services/firebase/rewards";
 import { claimDailyBonus } from "../services/firebase/streak";
 import { generateDailyMissions } from "../services/firebase/dailyMissions";
+import {
+  completeEcoAction,
+  getEcoActions,
+  saveEcoAction,
+} from "../services/firebase/eco";
 
 import { useAuth } from "../hooks/useAuth";
 import { useChildren } from "../hooks/useChildren";
@@ -40,6 +45,11 @@ type AppMode = "parent" | "kid";
 
 type FloatingRewardState = {
   id: number;
+  xp: number;
+  coins: number;
+};
+
+type EcoReward = {
   xp: number;
   coins: number;
 };
@@ -58,37 +68,25 @@ export default function Home() {
     selectChild,
   } = useChildren(user);
 
-  const { tasks, addTask, completeSelectedTask } =
-    useTasks(user, selectedChildId);
+  const { tasks, addTask, completeSelectedTask } = useTasks(
+    user,
+    selectedChildId
+  );
 
-  const [childName, setChildName] =
-    useState("");
+  const [childName, setChildName] = useState("");
+  const [childAge, setChildAge] = useState(8);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [loadingMission, setLoadingMission] = useState(false);
+  const [mode, setMode] = useState<AppMode>("parent");
 
-  const [childAge, setChildAge] =
-    useState(8);
+  const [showSplash, setShowSplash] = useState(true);
 
-  const [taskTitle, setTaskTitle] =
-    useState("");
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [levelUpLevel, setLevelUpLevel] = useState(1);
 
-  const [loadingMission, setLoadingMission] =
-    useState(false);
+  const [showFloatingReward, setShowFloatingReward] = useState(false);
 
-  const [mode, setMode] =
-    useState<AppMode>("parent");
-
-  const [showSplash, setShowSplash] =
-    useState(true);
-
-  const [showLevelUp, setShowLevelUp] =
-    useState(false);
-
-  const [levelUpLevel, setLevelUpLevel] =
-    useState(1);
-
-  const [
-    showFloatingReward,
-    setShowFloatingReward,
-  ] = useState(false);
+  const [completedEcoActions, setCompletedEcoActions] = useState<string[]>([]);
 
   const [floatingReward, setFloatingReward] =
     useState<FloatingRewardState>({
@@ -97,15 +95,10 @@ export default function Home() {
       coins: 0,
     });
 
-  const previousLevelRef =
-    useRef<number>(1);
+  const previousLevelRef = useRef<number>(1);
+  const floatingRewardTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const floatingRewardTimeoutRef =
-    useRef<NodeJS.Timeout | null>(null);
-
-  const today = new Date()
-    .toISOString()
-    .split("T")[0];
+  const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -116,14 +109,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const savedMode = localStorage.getItem(
-      MODE_STORAGE_KEY
-    );
+    const savedMode = localStorage.getItem(MODE_STORAGE_KEY);
 
-    if (
-      savedMode === "parent" ||
-      savedMode === "kid"
-    ) {
+    if (savedMode === "parent" || savedMode === "kid") {
       setMode(savedMode);
     }
   }, []);
@@ -131,20 +119,13 @@ export default function Home() {
   useEffect(() => {
     return () => {
       if (floatingRewardTimeoutRef.current) {
-        clearTimeout(
-          floatingRewardTimeoutRef.current
-        );
+        clearTimeout(floatingRewardTimeoutRef.current);
       }
     };
   }, []);
 
   useEffect(() => {
-    if (
-      !user ||
-      !selectedChildId ||
-      !selectedChild
-    )
-      return;
+    if (!user || !selectedChildId || !selectedChild) return;
 
     generateDailyMissions({
       userId: user.uid,
@@ -152,25 +133,27 @@ export default function Home() {
       childName: selectedChild.name,
       childAge: selectedChild.age,
     });
-  }, [
-    user,
-    selectedChildId,
-    selectedChild,
-  ]);
+  }, [user, selectedChildId, selectedChild]);
+
+  useEffect(() => {
+    async function loadEcoActions() {
+      if (!user || !selectedChild) return;
+
+      const actions = await getEcoActions(user.uid, selectedChild.id, today);
+
+      setCompletedEcoActions(actions);
+    }
+
+    loadEcoActions();
+  }, [user, selectedChild, today]);
 
   useEffect(() => {
     if (!selectedChild) return;
 
-    const currentLevel = getLevelFromXP(
-      selectedChild.xp || 0
-    );
+    const currentLevel = getLevelFromXP(selectedChild.xp || 0);
 
-    if (
-      currentLevel >
-      previousLevelRef.current
-    ) {
+    if (currentLevel > previousLevelRef.current) {
       setLevelUpLevel(currentLevel);
-
       setShowLevelUp(true);
 
       confetti({
@@ -179,25 +162,15 @@ export default function Home() {
         origin: { y: 0.6 },
       });
 
-      toast.success(
-        `${selectedChild.name} est niveau ${currentLevel} 🚀`
-      );
+      toast.success(`${selectedChild.name} est niveau ${currentLevel} 🚀`);
     }
 
-    previousLevelRef.current =
-      currentLevel;
+    previousLevelRef.current = currentLevel;
   }, [selectedChild]);
 
-  const triggerFloatingReward = (
-    xp: number,
-    coins: number
-  ) => {
-    if (
-      floatingRewardTimeoutRef.current
-    ) {
-      clearTimeout(
-        floatingRewardTimeoutRef.current
-      );
+  const triggerFloatingReward = (xp: number, coins: number) => {
+    if (floatingRewardTimeoutRef.current) {
+      clearTimeout(floatingRewardTimeoutRef.current);
     }
 
     setFloatingReward({
@@ -208,97 +181,70 @@ export default function Home() {
 
     setShowFloatingReward(true);
 
-    floatingRewardTimeoutRef.current =
-      setTimeout(() => {
-        setShowFloatingReward(false);
-      }, 1400);
+    floatingRewardTimeoutRef.current = setTimeout(() => {
+      setShowFloatingReward(false);
+    }, 1400);
   };
 
-  const handleChangeMode = (
-    nextMode: AppMode
-  ) => {
+  const handleChangeMode = (nextMode: AppMode) => {
     setMode(nextMode);
-
-    localStorage.setItem(
-      MODE_STORAGE_KEY,
-      nextMode
-    );
+    localStorage.setItem(MODE_STORAGE_KEY, nextMode);
   };
 
   const handleAddChild = async () => {
     await addChild(childName, childAge);
 
     setChildName("");
-
     setChildAge(8);
 
     toast.success("Enfant ajouté ✨");
   };
 
-  const handleGenerateMission =
-    async () => {
-      if (!selectedChild) return;
+  const handleGenerateMission = async () => {
+    if (!selectedChild) return;
 
-      try {
-        setLoadingMission(true);
+    try {
+      setLoadingMission(true);
 
-        const response = await fetch(
-          "/api/generate-mission",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify({
-              childName:
-                selectedChild.name,
-              childAge:
-                selectedChild.age,
-            }),
-          }
-        );
+      const response = await fetch("/api/generate-mission", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          childName: selectedChild.name,
+          childAge: selectedChild.age,
+        }),
+      });
 
-        const data =
-          await response.json();
+      const data = await response.json();
 
-        setTaskTitle(data.mission);
+      setTaskTitle(data.mission);
 
-        confetti({
-          particleCount: 80,
-          spread: 70,
-          origin: { y: 0.6 },
-        });
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
 
-        toast.success(
-          "Mission IA générée 🤖"
-        );
-      } catch (error) {
-        toast.error(
-          "Erreur génération IA"
-        );
-      } finally {
-        setLoadingMission(false);
-      }
-    };
+      toast.success("Mission IA générée 🤖");
+    } catch (error) {
+      toast.error("Erreur génération IA");
+    } finally {
+      setLoadingMission(false);
+    }
+  };
 
   const handleAddTask = async () => {
     await addTask(taskTitle);
 
     setTaskTitle("");
 
-    toast.success(
-      "Mission ajoutée ✅"
-    );
+    toast.success("Mission ajoutée ✅");
   };
 
-  const handleCompleteTask = async (
-    task: Task
-  ) => {
-    triggerFloatingReward(
-      task.xp,
-      task.coins
-    );
+  const handleCompleteTask = async (task: Task) => {
+    triggerFloatingReward(task.xp, task.coins);
 
     confetti({
       particleCount: 120,
@@ -308,33 +254,45 @@ export default function Home() {
 
     await completeSelectedTask(task);
 
+    toast.success("Mission accomplie 🎉");
+  };
+
+  const handleCompleteEcoAction = async (
+    actionId: string,
+    reward: EcoReward
+  ) => {
+    if (!user || !selectedChild) return;
+
+    if (completedEcoActions.includes(actionId)) return;
+
+    triggerFloatingReward(reward.xp, reward.coins);
+
+    confetti({
+      particleCount: 90,
+      spread: 80,
+      origin: { y: 0.6 },
+    });
+
+    await completeEcoAction(user.uid, selectedChild.id, reward.xp, reward.coins);
+
+    await saveEcoAction(user.uid, selectedChild.id, today, actionId);
+
+    setCompletedEcoActions((prev) => [...prev, actionId]);
+
     toast.success(
-      "Mission accomplie 🎉"
+      `Bon geste validé 🌿 +${reward.xp} XP +${reward.coins} 🪙`
     );
   };
 
-  const handleBuyReward = async (
-    reward: Reward
-  ) => {
-    if (!user || !selectedChild)
-      return;
+  const handleBuyReward = async (reward: Reward) => {
+    if (!user || !selectedChild) return;
 
-    if (
-      (selectedChild.coins || 0) <
-      reward.price
-    ) {
-      toast.error(
-        "Pas assez de pièces 🪙"
-      );
-
+    if ((selectedChild.coins || 0) < reward.price) {
+      toast.error("Pas assez de pièces 🪙");
       return;
     }
 
-    await buyReward(
-      user.uid,
-      selectedChild.id,
-      reward.price
-    );
+    await buyReward(user.uid, selectedChild.id, reward.price);
 
     confetti({
       particleCount: 80,
@@ -342,53 +300,34 @@ export default function Home() {
       origin: { y: 0.7 },
     });
 
-    toast.success(
-      `${selectedChild.name} a acheté : ${reward.name} 🎁`
-    );
+    toast.success(`${selectedChild.name} a acheté : ${reward.name} 🎁`);
   };
 
-  const handleClaimDailyBonus =
-    async () => {
-      if (!user || !selectedChild)
-        return;
+  const handleClaimDailyBonus = async () => {
+    if (!user || !selectedChild) return;
 
-      if (
-        selectedChild.lastBonusDate ===
-        today
-      ) {
-        toast.warning(
-          "Bonus déjà récupéré aujourd’hui 🔥"
-        );
+    if (selectedChild.lastBonusDate === today) {
+      toast.warning("Bonus déjà récupéré aujourd’hui 🔥");
+      return;
+    }
 
-        return;
-      }
+    triggerFloatingReward(10, 5);
 
-      triggerFloatingReward(10, 5);
+    await claimDailyBonus(user.uid, selectedChild.id);
 
-      await claimDailyBonus(
-        user.uid,
-        selectedChild.id
-      );
+    confetti({
+      particleCount: 150,
+      spread: 100,
+      origin: { y: 0.6 },
+    });
 
-      confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { y: 0.6 },
-      });
-
-      toast.success(
-        "+10 XP et +5 pièces 🎁"
-      );
-    };
+    toast.success("+10 XP et +5 pièces 🎁");
+  };
 
   return (
     <>
       <AnimatePresence>
-        {showSplash && (
-          <SplashScreen
-            visible={showSplash}
-          />
-        )}
+        {showSplash && <SplashScreen visible={showSplash} />}
       </AnimatePresence>
 
       <SpaceBackground />
@@ -402,9 +341,7 @@ export default function Home() {
       <LevelUpModal
         level={levelUpLevel}
         open={showLevelUp}
-        onClose={() =>
-          setShowLevelUp(false)
-        }
+        onClose={() => setShowLevelUp(false)}
       />
 
       <FloatingReward
@@ -422,11 +359,7 @@ export default function Home() {
 
               <div className="flex items-center justify-center gap-3">
                 <GameButton
-                  onClick={() =>
-                    handleChangeMode(
-                      "parent"
-                    )
-                  }
+                  onClick={() => handleChangeMode("parent")}
                   className={
                     mode === "parent"
                       ? "bg-gradient-to-r from-purple-500 to-fuchsia-500"
@@ -437,11 +370,7 @@ export default function Home() {
                 </GameButton>
 
                 <GameButton
-                  onClick={() =>
-                    handleChangeMode(
-                      "kid"
-                    )
-                  }
+                  onClick={() => handleChangeMode("kid")}
                   className={
                     mode === "kid"
                       ? "bg-gradient-to-r from-pink-500 to-orange-400"
@@ -455,271 +384,118 @@ export default function Home() {
               {user ? (
                 <>
                   <div className="text-center">
-                    <p className="font-bold text-green-400">
-                      Connecté ✅
-                    </p>
-
+                    <p className="font-bold text-green-400">Connecté ✅</p>
                     <p className="text-sm text-white/60">
-                      {
-                        user.displayName
-                      }
+                      {user.displayName}
                     </p>
                   </div>
 
-                  {mode === "kid" &&
-                  selectedChild ? (
+                  {mode === "kid" && selectedChild ? (
                     <KidModeView
-                      child={
-                        selectedChild
-                      }
+                      child={selectedChild}
                       tasks={tasks}
                       rewards={rewards}
                       today={today}
-                      taskTitle={
-                        taskTitle
-                      }
-                      loadingMission={
-                        loadingMission
-                      }
-                      onClaimDailyBonus={
-                        handleClaimDailyBonus
-                      }
-                      onTaskTitleChange={
-                        setTaskTitle
-                      }
-                      onGenerateMission={
-                        handleGenerateMission
-                      }
-                      onAddTask={
-                        handleAddTask
-                      }
-                      onCompleteTask={
-                        handleCompleteTask
-                      }
-                      onBuyReward={
-                        handleBuyReward
-                      }
+                      taskTitle={taskTitle}
+                      loadingMission={loadingMission}
+                      completedEcoActions={completedEcoActions}
+                      onClaimDailyBonus={handleClaimDailyBonus}
+                      onTaskTitleChange={setTaskTitle}
+                      onGenerateMission={handleGenerateMission}
+                      onAddTask={handleAddTask}
+                      onCompleteTask={handleCompleteTask}
+                      onBuyReward={handleBuyReward}
+                      onCompleteEcoAction={handleCompleteEcoAction}
                     />
                   ) : (
                     <>
-                      {mode ===
-                        "parent" && (
+                      {mode === "parent" && (
                         <div className="rounded-[2rem] bg-white/10 p-4 backdrop-blur-xl">
                           <div className="flex flex-col gap-3">
                             <input
-                              value={
-                                childName
-                              }
-                              onChange={(
-                                e
-                              ) =>
-                                setChildName(
-                                  e.target
-                                    .value
-                                )
-                              }
+                              value={childName}
+                              onChange={(e) => setChildName(e.target.value)}
                               placeholder="Nom de l’enfant"
-                              className="
-                                rounded-2xl
-                                border
-                                border-white/10
-                                bg-white/10
-                                p-4
-                                text-white
-                                placeholder:text-white/40
-                              "
+                              className="rounded-2xl border border-white/10 bg-white/10 p-4 text-white placeholder:text-white/40"
                             />
 
                             <input
                               type="number"
-                              value={
-                                childAge
+                              value={childAge}
+                              onChange={(e) =>
+                                setChildAge(Number(e.target.value))
                               }
-                              onChange={(
-                                e
-                              ) =>
-                                setChildAge(
-                                  Number(
-                                    e
-                                      .target
-                                      .value
-                                  )
-                                )
-                              }
-                              className="
-                                rounded-2xl
-                                border
-                                border-white/10
-                                bg-white/10
-                                p-4
-                                text-white
-                              "
+                              className="rounded-2xl border border-white/10 bg-white/10 p-4 text-white"
                             />
 
                             <GameButton
-                              onClick={
-                                handleAddChild
-                              }
-                              className="
-                                bg-gradient-to-r
-                                from-purple-500
-                                via-pink-500
-                                to-orange-400
-                              "
+                              onClick={handleAddChild}
+                              className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400"
                             >
-                              ✨ Ajouter
-                              enfant
+                              ✨ Ajouter enfant
                             </GameButton>
                           </div>
                         </div>
                       )}
 
-                      {children.length >
-                        0 && (
-                        <Leaderboard
-                          children={
-                            children
-                          }
-                        />
+                      {children.length > 0 && (
+                        <Leaderboard children={children} />
                       )}
 
                       <div className="flex flex-col gap-4">
-                        {children.map(
-                          (child) => {
-                            const xp =
-                              child.xp ||
-                              0;
+                        {children.map((child) => {
+                          const xp = child.xp || 0;
+                          const coins = child.coins || 0;
+                          const level = getLevelFromXP(xp);
+                          const nextLevelXP = getNextLevelXP(xp);
+                          const progress = Math.min(
+                            (xp / nextLevelXP) * 100,
+                            100
+                          );
+                          const isSelected = selectedChildId === child.id;
+                          const badges = getBadges(xp, coins);
 
-                            const coins =
-                              child.coins ||
-                              0;
-
-                            const level =
-                              getLevelFromXP(
-                                xp
-                              );
-
-                            const nextLevelXP =
-                              getNextLevelXP(
-                                xp
-                              );
-
-                            const progress =
-                              Math.min(
-                                (xp /
-                                  nextLevelXP) *
-                                  100,
-                                100
-                              );
-
-                            const isSelected =
-                              selectedChildId ===
-                              child.id;
-
-                            const badges =
-                              getBadges(
-                                xp,
-                                coins
-                              );
-
-                            return (
-                              <ChildCard
-                                key={
-                                  child.id
-                                }
-                                child={
-                                  child
-                                }
-                                isSelected={
-                                  isSelected
-                                }
-                                level={
-                                  level
-                                }
-                                progress={
-                                  progress
-                                }
-                                nextLevelXP={
-                                  nextLevelXP
-                                }
-                                badges={
-                                  badges
-                                }
-                                showDelete={
-                                  mode ===
-                                  "parent"
-                                }
-                                onSelect={() =>
-                                  selectChild(
-                                    child.id
-                                  )
-                                }
-                                onDelete={() =>
-                                  removeChild(
-                                    child.id
-                                  )
-                                }
-                              />
-                            );
-                          }
-                        )}
+                          return (
+                            <ChildCard
+                              key={child.id}
+                              child={child}
+                              isSelected={isSelected}
+                              level={level}
+                              progress={progress}
+                              nextLevelXP={nextLevelXP}
+                              badges={badges}
+                              showDelete={mode === "parent"}
+                              onSelect={() => selectChild(child.id)}
+                              onDelete={() => removeChild(child.id)}
+                            />
+                          );
+                        })}
                       </div>
 
                       {selectedChild && (
-                        <div
-                          key={
-                            selectedChild.id
-                          }
-                        >
+                        <div key={selectedChild.id}>
                           <DailyBonus
-                            child={
-                              selectedChild
-                            }
+                            child={selectedChild}
                             today={today}
-                            onClaim={
-                              handleClaimDailyBonus
-                            }
+                            onClaim={handleClaimDailyBonus}
                           />
 
                           <MissionPanel
-                            child={
-                              selectedChild
-                            }
+                            child={selectedChild}
                             tasks={tasks}
-                            taskTitle={
-                              taskTitle
-                            }
-                            loadingMission={
-                              loadingMission
-                            }
-                            canManageMissions={
-                              mode ===
-                              "parent"
-                            }
-                            onTaskTitleChange={
-                              setTaskTitle
-                            }
-                            onGenerateMission={
-                              handleGenerateMission
-                            }
-                            onAddTask={
-                              handleAddTask
-                            }
-                            onCompleteTask={
-                              handleCompleteTask
-                            }
+                            taskTitle={taskTitle}
+                            loadingMission={loadingMission}
+                            canManageMissions={mode === "parent"}
+                            onTaskTitleChange={setTaskTitle}
+                            onGenerateMission={handleGenerateMission}
+                            onAddTask={handleAddTask}
+                            onCompleteTask={handleCompleteTask}
                           />
 
                           <RewardShop
-                            child={
-                              selectedChild
-                            }
-                            rewards={
-                              rewards
-                            }
-                            onBuyReward={
-                              handleBuyReward
-                            }
+                            child={selectedChild}
+                            rewards={rewards}
+                            onBuyReward={handleBuyReward}
                           />
                         </div>
                       )}
